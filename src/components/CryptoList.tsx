@@ -75,19 +75,20 @@ export default function CryptoList({ isDarkMode, data }: Props) {
          </View>
 
          <View style={styles.priceRow}>
-           <Text style={[
-             styles.price,
-             { color: isDarkMode ? '#FFFFFF' : '#000000' }
-           ]}>
-              {crypto.price.toLocaleString()}
-           </Text>
+         <Text style={[
+    styles.price,
+    { color: isDarkMode ? '#FFFFFF' : '#000000' }
+  ]}>
+    {crypto.price.toLocaleString()}
+  </Text>
 
-           <Text style={[
-             styles.change,
-             { color: '#FF4B4B' }
-           ]}>
-             {crypto.change >= 0 ? '+' : ''}{crypto.change.toFixed(2)}%
-           </Text>
+  {/* اینجا رو تغییر دادیم */}
+  <Text style={[
+    styles.change,
+    { color: crypto.change >= 0 ? '#22C55E' : '#FF4B4B' }  // رنگ سبز برای مثبت و قرمز برای منفی
+  ]}>
+    {crypto.change >= 0 ? '+' : ''}{crypto.change.toFixed(2)}%
+  </Text>
          </View>
 
          <Text style={[
@@ -108,7 +109,7 @@ const styles = StyleSheet.create({
    marginVertical: 7,
  },
  scrollContent: {
-  paddingRight: 17, 
+  paddingRight: 27, 
 },
  card: {
    padding: 7,
@@ -144,7 +145,7 @@ const styles = StyleSheet.create({
  },
  change: {
    fontSize: 10,
-   fontWeight: '500',
+   fontWeight: '300',
  },
  usdPrice: {
    fontSize: 10,

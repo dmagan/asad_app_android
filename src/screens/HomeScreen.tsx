@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import ThemeToggle from '../components/ThemeToggle'; 
+import Slider from './../components/Slider';
+
+
 import {
   View,
   Text,
@@ -24,12 +28,26 @@ interface StoryData {
   id: string;
   title: string;
   imageUrl: string;
+  link?: string;      // اضافه کردیم
+  subtitle?: string;  // اضافه کردیم
 }
+
+interface SliderData {
+  id: string;
+  title: string;
+  imageUrl: string;
+}
+
+
 
 export default function HomeScreen({ isDarkMode, setIsDarkMode }: { 
   isDarkMode: boolean; 
   setIsDarkMode: (value: boolean) => void;
 }) {
+  
+  const [stories, setStories] = useState<StoryData[]>([]);
+  const [sliders, setSliders] = useState<SliderData[]>([]);
+
   const [activeTab, setActiveTab] = useState<string>('home');
   const [cryptoPrices, setCryptoPrices] = useState<CryptoData[]>([
     { 
@@ -84,6 +102,60 @@ export default function HomeScreen({ isDarkMode, setIsDarkMode }: {
   ]);
 
   useEffect(() => {
+    const fetchStories = async () => {
+      try {
+        const response = await fetch('https://alicomputer.com/wp-json/wp/v2/story_highlights?_embed');  // _embed رو اضافه کردیم
+        const data = await response.json();
+        
+        const formattedStories = data.map((story: any) => ({
+          id: story.id.toString(),
+          title: story.title.rendered,
+          imageUrl: story._embedded?.['wp:featuredmedia']?.[0]?.source_url || '',  // تصویر شاخص
+          link: story.meta?.story_link,
+          subtitle: story.meta?.story_subtitle
+        }));
+        
+        setStories(formattedStories);
+      } catch (error) {
+        console.error('Error fetching stories:', error);
+      }
+    };
+  
+    fetchStories();
+  }, []);
+
+ 
+ 
+ 
+ 
+ 
+  useEffect(() => {
+    const fetchSliders = async () => {
+      try {
+        const response = await fetch('https://alicomputer.com/wp-json/wp/v2/slider?_embed');
+        const data = await response.json();
+        
+        const formattedSliders = data.map((slider: any) => ({
+          id: slider.id.toString(),
+          title: slider.title.rendered,
+          imageUrl: slider._embedded?.['wp:featuredmedia']?.[0]?.source_url || ''
+        }));
+        
+        setSliders(formattedSliders);
+      } catch (error) {
+        console.error('Error fetching sliders:', error);
+      }
+    };
+  
+    fetchSliders();
+  }, []);
+ 
+ 
+ 
+ 
+ 
+ 
+  useEffect(() => {
     const fetchPrices = async () => {
       try {
         const response = await fetch(
@@ -117,43 +189,40 @@ export default function HomeScreen({ isDarkMode, setIsDarkMode }: {
 
       {/* Header */}
       <View style={[
-        styles.header,
-        { backgroundColor: isDarkMode ? '#1E1E1E' : '#FFFFFF' }
-      ]}>
-        {/* Menu Icon */}
-        <Text style={[
-          styles.menuIcon,
-          { color: isDarkMode ? '#FFFFFF' : '#000000' }
-        ]}>
-          ☰
-        </Text>
+  styles.header,
+  { backgroundColor: isDarkMode ? '#212837' : '#FFFFFF' }
+]}>
 
-        {/* Title */}
-        <Text style={[
-          styles.headerTitle,
-          { color: isDarkMode ? '#FFFFFF' : '#000000' }
-        ]}>
-          خانه
-        </Text>
+  {/* قسمت منو */}
+  <Text style={[
+    styles.menuIcon,
+    { color: isDarkMode ? '#FFFFFF' : '#000000' }
+  ]}>
+    {/*☰*/}
+  </Text>
 
-        {/* Theme Toggle */}
-        <TouchableOpacity onPress={() => setIsDarkMode(!isDarkMode)}>
-          <Text style={styles.themeIcon}>
-            {isDarkMode ? '☀️' : '🌙'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+
+  {/* عنوان */}
+  <Text style={[
+    styles.headerTitle,
+    { color: isDarkMode ? '#FFFFFF' : '#000000' }
+  ]}>
+    خانه
+  </Text>
+
+  {/* ه جای کد قبلی تم، این رو بذارید */}
+  <ThemeToggle 
+    isDarkMode={isDarkMode}
+    onToggle={() => setIsDarkMode(!isDarkMode)}
+  />
+</View>
 
       <ScrollView>
-        <CryptoList 
-          isDarkMode={isDarkMode}
-          data={cryptoPrices}
-        />
-        <Stories 
-          isDarkMode={isDarkMode}
-          stories={[]}
-          onStoryPress={() => {}}
-        />
+        <CryptoList   isDarkMode={isDarkMode}  data={cryptoPrices} />
+        <Stories  isDarkMode={isDarkMode}  stories={stories}  onStoryPress={(id) => { const story = stories.find(s => s.id === id); if (story?.link) { console.log('Opening link:', story.link);   }  }}/>
+        <Slider  isDarkMode={isDarkMode}  data={sliders} />
+
+
       </ScrollView>
 
       <BottomNav
@@ -175,8 +244,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
+  
   },
   headerTitle: {
     fontSize: 18,

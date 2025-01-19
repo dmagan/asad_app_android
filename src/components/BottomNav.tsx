@@ -32,7 +32,7 @@ export default function BottomNav({ isDarkMode, activeTab, onTabPress }: Props) 
   return (
     <View style={[
       styles.container,
-      { backgroundColor: isDarkMode ? '#1E1E1E' : '#FFFFFF' }
+      { backgroundColor: isDarkMode ? '#212837' : '#FFFFFF' }
     ]}>
       {navItems.map((item) => (
         <TouchableOpacity
@@ -66,8 +66,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#EEEEEE',
+    
   },
   navItem: {
     alignItems: 'center',

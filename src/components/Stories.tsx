@@ -67,9 +67,6 @@ const styles = StyleSheet.create({
     width: 72,
   },
   storyImageContainer: {
-    padding: 2,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 30,
   },
   storyImageBorder: {
     width: 64,
