@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import ThemeToggle from '../components/ThemeToggle'; 
 import Slider from './../components/Slider';
 
-
 import {
   View,
   Text,
@@ -22,14 +21,25 @@ interface CryptoData {
   name: string;
   price: number;
   change: number;
+  iconSvg?: string;
+}
+
+interface WordPressCrypto {
+  id: number;
+  title: { rendered: string };
+  meta: {
+    symbol: string;
+    coingecko_id: string;
+    icon_svg: string;
+  };
 }
 
 interface StoryData {
   id: string;
   title: string;
   imageUrl: string;
-  link?: string;      // اضافه کردیم
-  subtitle?: string;  // اضافه کردیم
+  link?: string;
+  subtitle?: string;
 }
 
 interface SliderData {
@@ -38,79 +48,26 @@ interface SliderData {
   imageUrl: string;
 }
 
-
-
 export default function HomeScreen({ isDarkMode, setIsDarkMode }: { 
   isDarkMode: boolean; 
   setIsDarkMode: (value: boolean) => void;
 }) {
-  
   const [stories, setStories] = useState<StoryData[]>([]);
   const [sliders, setSliders] = useState<SliderData[]>([]);
-
   const [activeTab, setActiveTab] = useState<string>('home');
-  const [cryptoPrices, setCryptoPrices] = useState<CryptoData[]>([
-    { 
-      id: 'bitcoin', 
-      symbol: 'BTC',
-      name: 'Bitcoin',
-      price: 42000,
-      change: 2.5
-    },
-    { 
-      id: 'ethereum', 
-      symbol: 'ETH',
-      name: 'Ethereum',
-      price: 2200,
-      change: 1.8
-    },
-    { 
-      id: 'binancecoin', 
-      symbol: 'BNB',
-      name: 'BNB',
-      price: 320,
-      change: -0.5
-    },
-    { 
-      id: 'solana', 
-      symbol: 'SOL',
-      name: 'Solana',
-      price: 98,
-      change: 3.2
-    },
-    { 
-      id: 'ripple', 
-      symbol: 'XRP',
-      name: 'Ripple',
-      price: 0.62,
-      change: 1.1
-    },
-    { 
-      id: 'dogecoin', 
-      symbol: 'DOGE',
-      name: 'Dogecoin',
-      price: 0.08,
-      change: -1.2
-    },
-    { 
-      id: 'cardano', 
-      symbol: 'ADA',
-      name: 'Cardano',
-      price: 0.51,
-      change: 0.9
-    }
-  ]);
+  const [cryptoPrices, setCryptoPrices] = useState<CryptoData[]>([]);
 
+  // Fetch stories
   useEffect(() => {
     const fetchStories = async () => {
       try {
-        const response = await fetch('https://alicomputer.com/wp-json/wp/v2/story_highlights?_embed');  // _embed رو اضافه کردیم
+        const response = await fetch('https://alicomputer.com/wp-json/wp/v2/story_highlights?_embed');
         const data = await response.json();
         
         const formattedStories = data.map((story: any) => ({
           id: story.id.toString(),
           title: story.title.rendered,
-          imageUrl: story._embedded?.['wp:featuredmedia']?.[0]?.source_url || '',  // تصویر شاخص
+          imageUrl: story._embedded?.['wp:featuredmedia']?.[0]?.source_url || '',
           link: story.meta?.story_link,
           subtitle: story.meta?.story_subtitle
         }));
@@ -124,11 +81,7 @@ export default function HomeScreen({ isDarkMode, setIsDarkMode }: {
     fetchStories();
   }, []);
 
- 
- 
- 
- 
- 
+  // Fetch sliders
   useEffect(() => {
     const fetchSliders = async () => {
       try {
@@ -149,34 +102,45 @@ export default function HomeScreen({ isDarkMode, setIsDarkMode }: {
   
     fetchSliders();
   }, []);
- 
- 
- 
- 
- 
- 
-  useEffect(() => {
-    const fetchPrices = async () => {
-      try {
-        const response = await fetch(
-          'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,binancecoin,ripple,dogecoin,cardano&vs_currencies=usd&include_24hr_change=true'
-        );
-        const data = await response.json();
-        
-        const updatedPrices = cryptoPrices.map(crypto => ({
-          ...crypto,
-          price: data[crypto.id]?.usd || crypto.price,
-          change: data[crypto.id]?.usd_24h_change || crypto.change
-        }));
 
-        setCryptoPrices(updatedPrices);
+  // Fetch crypto data
+  useEffect(() => {
+    const fetchCryptoData = async () => {
+      try {
+        // Fetch crypto currencies from WordPress
+        const wpResponse = await fetch('https://alicomputer.com/wp-json/wp/v2/crypto_currency?per_page=20');
+        const wpCryptos: WordPressCrypto[] = await wpResponse.json();
+        
+        // Get CoinGecko IDs from WordPress data
+        const coinGeckoIds = wpCryptos
+          .map(crypto => crypto.meta.coingecko_id)
+          .filter(id => id)
+          .join(',');
+        
+        // Fetch prices from CoinGecko
+        const priceResponse = await fetch(
+          `https://api.coingecko.com/api/v3/simple/price?ids=${coinGeckoIds}&vs_currencies=usd&include_24hr_change=true`
+        );
+        const priceData = await priceResponse.json();
+        
+        // Combine WordPress and CoinGecko data
+        const combinedData = wpCryptos.map(wpCrypto => ({
+          id: wpCrypto.meta.coingecko_id,
+          symbol: wpCrypto.meta.symbol,
+          name: wpCrypto.title.rendered,
+          iconSvg: wpCrypto.meta.icon_svg,
+          price: priceData[wpCrypto.meta.coingecko_id]?.usd || 0,
+          change: priceData[wpCrypto.meta.coingecko_id]?.usd_24h_change || 0
+        }));
+        
+        setCryptoPrices(combinedData);
       } catch (error) {
-        console.error('Error fetching crypto prices:', error);
+        console.error('Error fetching crypto data:', error);
       }
     };
 
-    fetchPrices();
-    const interval = setInterval(fetchPrices, 60000);
+    fetchCryptoData();
+    const interval = setInterval(fetchCryptoData, 60000); // Update every minute
     return () => clearInterval(interval);
   }, []);
 
@@ -187,42 +151,49 @@ export default function HomeScreen({ isDarkMode, setIsDarkMode }: {
     ]}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
 
-      {/* Header */}
       <View style={[
-  styles.header,
-  { backgroundColor: isDarkMode ? '#212837' : '#FFFFFF' }
-]}>
+        styles.header,
+        { backgroundColor: isDarkMode ? '#212837' : '#FFFFFF' }
+      ]}>
+        <Text style={[
+          styles.menuIcon,
+          { color: isDarkMode ? '#FFFFFF' : '#000000' }
+        ]}>
+          {/*☰*/}
+        </Text>
 
-  {/* قسمت منو */}
-  <Text style={[
-    styles.menuIcon,
-    { color: isDarkMode ? '#FFFFFF' : '#000000' }
-  ]}>
-    {/*☰*/}
-  </Text>
+        <Text style={[
+          styles.headerTitle,
+          { color: isDarkMode ? '#FFFFFF' : '#000000' }
+        ]}>
+          خانه
+        </Text>
 
-
-  {/* عنوان */}
-  <Text style={[
-    styles.headerTitle,
-    { color: isDarkMode ? '#FFFFFF' : '#000000' }
-  ]}>
-    خانه
-  </Text>
-
-  {/* ه جای کد قبلی تم، این رو بذارید */}
-  <ThemeToggle 
-    isDarkMode={isDarkMode}
-    onToggle={() => setIsDarkMode(!isDarkMode)}
-  />
-</View>
+        <ThemeToggle 
+          isDarkMode={isDarkMode}
+          onToggle={() => setIsDarkMode(!isDarkMode)}
+        />
+      </View>
 
       <ScrollView>
-        <CryptoList   isDarkMode={isDarkMode}  data={cryptoPrices} />
-        <Stories  isDarkMode={isDarkMode}  stories={stories}  onStoryPress={(id) => { const story = stories.find(s => s.id === id); if (story?.link) { console.log('Opening link:', story.link);   }  }}/>
-        <Slider  isDarkMode={isDarkMode}  data={sliders} />
-
-
+        <CryptoList 
+          isDarkMode={isDarkMode} 
+          data={cryptoPrices} 
+        />
+        <Stories 
+          isDarkMode={isDarkMode} 
+          stories={stories} 
+          onStoryPress={(id) => {
+            const story = stories.find(s => s.id === id);
+            if (story?.link) {
+              console.log('Opening link:', story.link);
+            }
+          }}
+        />
+        <Slider 
+          isDarkMode={isDarkMode} 
+          data={sliders} 
+        />
       </ScrollView>
 
       <BottomNav
@@ -244,7 +215,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-  
   },
   headerTitle: {
     fontSize: 18,
