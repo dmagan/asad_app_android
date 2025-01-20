@@ -14,7 +14,7 @@ interface CryptoData {
   name: string;
   price: number;
   change: number;
-  iconSvg?: string;
+  icon_svg?: string;
 }
 
 interface Props {
@@ -24,26 +24,35 @@ interface Props {
 
 export default function CryptoList({ isDarkMode, data }: Props) {
   const renderIcon = (crypto: CryptoData) => {
-    if (crypto.iconSvg) {
-      return (
-        <SvgXml 
-          xml={crypto.iconSvg} 
-          width={24} 
-          height={24} 
-        />
-      );
+    if (crypto.icon_svg && typeof crypto.icon_svg === 'string') {
+      try {
+        return (
+          <SvgXml 
+            xml={crypto.icon_svg} 
+            width={24} 
+            height={24} 
+          />
+        );
+      } catch (error) {
+        console.error('Error rendering SVG:', error);
+        return renderFallbackIcon(crypto.symbol);
+      }
     }
     
-    // Fallback to emoji if no SVG
+    return renderFallbackIcon(crypto.symbol);
+  };
+
+  const renderFallbackIcon = (symbol: string) => {
     return (
       <Text style={styles.icon}>
-        {getCryptoIcon(crypto.symbol)}
+        {getCryptoIcon(symbol)}
       </Text>
     );
   };
 
   const getCryptoIcon = (symbol: string) => {
-    switch (symbol.toUpperCase()) {
+    const symbolUpper = symbol?.toUpperCase() || '';
+    switch (symbolUpper) {
       case 'BTC': return '🟡';
       case 'ETH': return '🔷';
       case 'BNB': return '🟡';
@@ -74,18 +83,32 @@ export default function CryptoList({ isDarkMode, data }: Props) {
           ]}
         >
           <View style={styles.header}>
-            <View style={styles.iconContainer}>
-              {renderIcon(crypto)}
-            </View>
-            <Text style={[
-              styles.symbol,
-              { color: isDarkMode ? '#FFFFFF' : '#000000' }
-            ]}>
-              {crypto.symbol}
-            </Text>
-          </View>
+  <View style={styles.iconContainer}>
+    {renderIcon(crypto)}
+  </View>
+  <View style={styles.headerText}>
+    <Text style={[
+      styles.symbol,
+      { color: isDarkMode ? '#FFFFFF' : '#000000' }
+    ]}>
+      {crypto.symbol}
+    </Text>
+    <Text style={[
+      styles.name,
+      { color: isDarkMode ? '#FFFFFF' : '#000000' }
+    ]} numberOfLines={1}>
+      {" "}{crypto.name}
+    </Text>
+  </View>
+</View>
+          
+
+  <View style={styles.priceRow}>
+    {/* بقیه کد */}
+  </View>
 
           <View style={styles.priceRow}>
+            
             <Text style={[
               styles.price,
               { color: isDarkMode ? '#FFFFFF' : '#000000' }
@@ -107,13 +130,33 @@ export default function CryptoList({ isDarkMode, data }: Props) {
           ]}>
             $ {crypto.price.toLocaleString()} USD
           </Text>
+          
         </TouchableOpacity>
       ))}
     </ScrollView>
   );
 }
 
+
 const styles = StyleSheet.create({
+  name: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 4,
+    marginBottom: 4,
+    fontWeight: '400',
+  },
+  icon: {
+    fontSize: 11,
+  },
+  iconContainer: {
+    marginRight: 4,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
   container: {
     paddingHorizontal: 17,
     marginVertical: 7,
@@ -131,22 +174,19 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 3,
+    marginBottom: 8,
   },
-  iconContainer: {
-    marginRight: 4,
-    width: 24,
-    height: 24,
-    justifyContent: 'center',
+ headerText: {
+    flex: 1,
+    flexDirection: 'row', // افقی
     alignItems: 'center',
-  },
-  icon: {
-    fontSize: 11,
+    marginLeft: 4,
   },
   symbol: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '600',
   },
+  
   priceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -165,4 +205,5 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginTop: 4,
   }
+  
 });

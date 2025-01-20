@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import ThemeToggle from '../components/ThemeToggle'; 
-import Slider from './../components/Slider';
 
+
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,30 +8,45 @@ import {
   StyleSheet,
   SafeAreaView,
   StatusBar,
-  TouchableOpacity,
 } from 'react-native';
-import CryptoList from './../components/CryptoList';
-import Stories from './../components/Stories';
-import BottomNav from './../components/BottomNav';
 
+// Components
+import ThemeToggle from '../components/ThemeToggle';
+import Slider from '../components/Slider';
+import CryptoList from '../components/CryptoList';
+import Stories from '../components/Stories';
+import BottomNav from '../components/BottomNav';
+import ProductList from '../components/ProductList';
+
+
+
+// Interfaces
 interface CryptoData {
   id: string;
   symbol: string;
   name: string;
   price: number;
   change: number;
-  iconSvg?: string;
+  icon_svg?: string;
 }
 
-interface WordPressCrypto {
-  id: number;
-  title: { rendered: string };
-  meta: {
-    symbol: string;
-    coingecko_id: string;
-    icon_svg: string;
-  };
+interface CryptoBase {
+  id: string;
+  symbol: string;
+  name: string;
+  icon_svg?: string;
 }
+
+
+
+
+
+
+
+
+
+
+
 
 interface StoryData {
   id: string;
@@ -48,16 +62,31 @@ interface SliderData {
   imageUrl: string;
 }
 
-export default function HomeScreen({ isDarkMode, setIsDarkMode }: { 
+interface Product {
+  id: number;
+  name: string;
+  price: string;
+  images: Array<{
+    src: string;
+  }>;
+  permalink: string;
+}
+
+export default function HomeScreen({ 
+  isDarkMode, 
+  setIsDarkMode 
+}: { 
   isDarkMode: boolean; 
   setIsDarkMode: (value: boolean) => void;
 }) {
+  // States
   const [stories, setStories] = useState<StoryData[]>([]);
   const [sliders, setSliders] = useState<SliderData[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [activeTab, setActiveTab] = useState<string>('home');
   const [cryptoPrices, setCryptoPrices] = useState<CryptoData[]>([]);
 
-  // Fetch stories
+  // Fetch Stories
   useEffect(() => {
     const fetchStories = async () => {
       try {
@@ -81,7 +110,7 @@ export default function HomeScreen({ isDarkMode, setIsDarkMode }: {
     fetchStories();
   }, []);
 
-  // Fetch sliders
+  // Fetch Sliders
   useEffect(() => {
     const fetchSliders = async () => {
       try {
@@ -103,46 +132,114 @@ export default function HomeScreen({ isDarkMode, setIsDarkMode }: {
     fetchSliders();
   }, []);
 
-  // Fetch crypto data
-  useEffect(() => {
-    const fetchCryptoData = async () => {
-      try {
-        // Fetch crypto currencies from WordPress
-        const wpResponse = await fetch('https://alicomputer.com/wp-json/wp/v2/crypto_currency?per_page=20');
-        const wpCryptos: WordPressCrypto[] = await wpResponse.json();
-        
-        // Get CoinGecko IDs from WordPress data
-        const coinGeckoIds = wpCryptos
-          .map(crypto => crypto.meta.coingecko_id)
-          .filter(id => id)
-          .join(',');
-        
-        // Fetch prices from CoinGecko
-        const priceResponse = await fetch(
-          `https://api.coingecko.com/api/v3/simple/price?ids=${coinGeckoIds}&vs_currencies=usd&include_24hr_change=true`
-        );
-        const priceData = await priceResponse.json();
-        
-        // Combine WordPress and CoinGecko data
-        const combinedData = wpCryptos.map(wpCrypto => ({
-          id: wpCrypto.meta.coingecko_id,
-          symbol: wpCrypto.meta.symbol,
-          name: wpCrypto.title.rendered,
-          iconSvg: wpCrypto.meta.icon_svg,
-          price: priceData[wpCrypto.meta.coingecko_id]?.usd || 0,
-          change: priceData[wpCrypto.meta.coingecko_id]?.usd_24h_change || 0
-        }));
-        
-        setCryptoPrices(combinedData);
-      } catch (error) {
-        console.error('Error fetching crypto data:', error);
-      }
-    };
+// Fetch Products
+useEffect(() => {
+  const fetchProducts = async () => {
+    try {
+      // ابتدا محصولات تستی را نمایش می‌دهیم
+      const staticProducts = [
+        {
+          id: 1,
+          name: "محصول تست ۱",
+          price: "1000000",
+          images: [{ src: "https://picsum.photos/200" }],
+          permalink: "https://alicomputer.com"
+        },
+        {
+          id: 2,
+          name: "محصول تست ۲",
+          price: "2000000",
+          images: [{ src: "https://picsum.photos/200" }],
+          permalink: "https://alicomputer.com"
+        }
+      ];
+      
+      setProducts(staticProducts);
 
-    fetchCryptoData();
-    const interval = setInterval(fetchCryptoData, 60000); // Update every minute
-    return () => clearInterval(interval);
-  }, []);
+      // تلاش برای دریافت محصولات واقعی
+      const btoa = (str: string) => {
+        try {
+          return Buffer.from(str).toString('base64');
+        } catch (e) {
+          return window.btoa(str);
+        }
+      };
+
+      const username = 'ck_20b3c33ef902d4ccd94fc1230c940a85be290e0a';
+      const password = 'cs_e8a85df738324996fd3608154ab5bf0ccc6ded99';
+      const auth = btoa(`${username}:${password}`);
+      
+      const response = await fetch(
+        'https://alicomputer.com/wp-json/wc/v3/products?per_page=10',
+        {
+          headers: {
+            'Authorization': `Basic ${auth}`,
+            'Accept': 'application/json',
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      if (data && data.length > 0) {
+        setProducts(data);
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    }
+  };
+
+  fetchProducts();
+}, []);
+
+
+// Fetch Crypto Data and Prices
+useEffect(() => {
+  const fetchCryptoData = async () => {
+    try {
+      // دریافت داده‌های پایه از وردپرس
+      const wpResponse = await fetch('https://alicomputer.com/wp-json/wp/v2/crypto_currency');
+      const wpData = await wpResponse.json();
+    
+      // تبدیل به فرمت مورد نظر
+      const baseData = wpData.map((crypto: any) => ({
+        id: crypto.meta?.coingecko_id || '',
+        symbol: crypto.meta?.crypto_symbol || '',
+        name: crypto.title?.rendered || '',
+        icon_svg: crypto.meta?.icon_svg
+      }));
+
+      // دریافت قیمت‌ها از CoinGecko
+      const ids = baseData.map((c: CryptoBase) => c.id).join(',');
+            const cgResponse = await fetch(
+        `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`
+      );
+      const cgData = await cgResponse.json();
+      
+      // ترکیب داده‌ها
+      const finalData = baseData.map((crypto: CryptoBase) => ({
+        ...crypto,
+        price: cgData[crypto.id]?.usd || 0,
+        change: cgData[crypto.id]?.usd_24h_change || 0
+      }));
+
+      setCryptoPrices(finalData);
+    } catch (error) {
+      console.error('Error fetching crypto data:', error);
+    }
+  };
+
+  fetchCryptoData();
+  const interval = setInterval(fetchCryptoData, 60000);
+  return () => clearInterval(interval);
+}, []);
+  // Handle Story Press
+  const handleStoryPress = (id: string) => {
+    const story = stories.find(s => s.id === id);
+     };
 
   return (
     <SafeAreaView style={[
@@ -151,6 +248,7 @@ export default function HomeScreen({ isDarkMode, setIsDarkMode }: {
     ]}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
 
+      {/* Header */}
       <View style={[
         styles.header,
         { backgroundColor: isDarkMode ? '#212837' : '#FFFFFF' }
@@ -176,24 +274,15 @@ export default function HomeScreen({ isDarkMode, setIsDarkMode }: {
       </View>
 
       <ScrollView>
-        <CryptoList 
-          isDarkMode={isDarkMode} 
-          data={cryptoPrices} 
-        />
+        <CryptoList isDarkMode={isDarkMode} data={cryptoPrices} />
         <Stories 
           isDarkMode={isDarkMode} 
           stories={stories} 
-          onStoryPress={(id) => {
-            const story = stories.find(s => s.id === id);
-            if (story?.link) {
-              console.log('Opening link:', story.link);
-            }
-          }}
+          onStoryPress={handleStoryPress}
         />
-        <Slider 
-          isDarkMode={isDarkMode} 
-          data={sliders} 
-        />
+        <Slider isDarkMode={isDarkMode} data={sliders} />
+        
+        <ProductList isDarkMode={isDarkMode} products={products} />
       </ScrollView>
 
       <BottomNav
@@ -204,6 +293,32 @@ export default function HomeScreen({ isDarkMode, setIsDarkMode }: {
     </SafeAreaView>
   );
 }
+
+
+
+const btoa = (input: string) => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+  let str = input;
+  let output = '';
+
+  for (let block = 0, charCode, i = 0, map = chars;
+    str.charAt(i | 0) || (map = '=', i % 1);
+    output += map.charAt(63 & block >> 8 - i % 1 * 8)) {
+
+    charCode = str.charCodeAt(i += 3/4);
+
+    if (charCode > 0xFF) {
+      throw new Error("'btoa' failed: The string to be encoded contains characters outside of the Latin1 range.");
+    }
+    
+    block = block << 8 | charCode;
+  }
+  
+  return output;
+};
+
+
+
 
 const styles = StyleSheet.create({
   container: {
