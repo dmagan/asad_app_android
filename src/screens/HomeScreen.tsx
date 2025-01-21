@@ -1,3 +1,5 @@
+import CustomText from '../components/CustomText';
+import ProductFeatures from '../components/ProductFeatures';
 
 
 import React, { useState, useEffect } from 'react';
@@ -203,7 +205,8 @@ useEffect(() => {
       // دریافت داده‌های پایه از وردپرس
       const wpResponse = await fetch('https://alicomputer.com/wp-json/wp/v2/crypto_currency');
       const wpData = await wpResponse.json();
-    
+      
+      
       // تبدیل به فرمت مورد نظر
       const baseData = wpData.map((crypto: any) => ({
         id: crypto.meta?.coingecko_id || '',
@@ -260,12 +263,12 @@ useEffect(() => {
           {/*☰*/}
         </Text>
 
-        <Text style={[
+        <CustomText style={[
           styles.headerTitle,
           { color: isDarkMode ? '#FFFFFF' : '#000000' }
-        ]}>
+        ]}variant="regular">
           خانه
-        </Text>
+        </CustomText>
 
         <ThemeToggle 
           isDarkMode={isDarkMode}
@@ -283,6 +286,22 @@ useEffect(() => {
         <Slider isDarkMode={isDarkMode} data={sliders} />
         
         <ProductList isDarkMode={isDarkMode} products={products} />
+
+        <ProductFeatures 
+  isDarkMode={isDarkMode}
+  onFeaturePress={(id) => {
+    switch(id) {
+      case 'free-signals':
+        // اکشن مربوط به سیگنال‌های رایگان
+        break;
+      case 'vip-channel':
+        // اکشن مربوط به کانال VIP
+        break;
+      // و غیره...
+    }
+  }}
+/>
+
       </ScrollView>
 
       <BottomNav

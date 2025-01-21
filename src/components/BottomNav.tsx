@@ -1,15 +1,18 @@
 import React from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { ComponentProps } from 'react';
+import CustomText from './CustomText';
+
+type IconName = ComponentProps<typeof Ionicons>['name'];
 
 interface NavItem {
   key: string;
-  icon: string;
+  icon: IconName;
   label: string;
   isActive?: boolean;
 }
@@ -41,20 +44,23 @@ export default function BottomNav({ isDarkMode, activeTab, onTabPress }: Props) 
           onPress={() => onTabPress(item.key)}
         >
           <Ionicons
-            name={item.key === activeTab ? item.icon : `${item.icon}-outline`}
+            name={item.key === activeTab ? item.icon : `${item.icon}-outline` as IconName}
             size={24}
             color={item.key === activeTab ? '#F7D55D' : isDarkMode ? '#FFFFFF' : '#000000'}
           />
-          <Text style={[
-            styles.navLabel,
-            { 
-              color: item.key === activeTab 
-                ? '#F7D55D' 
-                : isDarkMode ? '#FFFFFF' : '#000000' 
-            }
-          ]}>
+          <CustomText
+            style={[
+              styles.navLabel,
+              { 
+                color: item.key === activeTab 
+                  ? '#F7D55D' 
+                  : isDarkMode ? '#FFFFFF' : '#000000' 
+              }
+            ]}
+            variant="regular"
+          >
             {item.label}
-          </Text>
+          </CustomText>
         </TouchableOpacity>
       ))}
     </View>
@@ -63,10 +69,9 @@ export default function BottomNav({ isDarkMode, activeTab, onTabPress }: Props) 
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'space-around',
     paddingVertical: 12,
-    
   },
   navItem: {
     alignItems: 'center',
@@ -74,5 +79,6 @@ const styles = StyleSheet.create({
   navLabel: {
     fontSize: 12,
     marginTop: 4,
+    fontFamily: 'IRANSans',
   },
 });

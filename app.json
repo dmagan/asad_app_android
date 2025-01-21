@@ -25,6 +25,23 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-font"
+    ],
+    "fonts": [
+      {
+        "asset": "./assets/fonts/IRANSans.ttf",
+        "family": "IRANSans"
+      },
+      {
+        "asset": "./assets/fonts/IRANSans-Medium.ttf",
+        "family": "IRANSans-Medium"
+      },
+      {
+        "asset": "./assets/fonts/IRANSans-Bold.ttf",
+        "family": "IRANSans-Bold"
+      }
+    ]
   }
 }

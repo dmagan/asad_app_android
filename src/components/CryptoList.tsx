@@ -34,7 +34,7 @@ export default function CryptoList({ isDarkMode, data }: Props) {
           />
         );
       } catch (error) {
-        console.error('Error rendering SVG:', error);
+
         return renderFallbackIcon(crypto.symbol);
       }
     }
